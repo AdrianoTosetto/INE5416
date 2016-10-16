@@ -198,21 +198,22 @@ triangulo(Id, X, Y, Base) :-
     new(Id,NBaseDiv2, NBaseDiv2),
     false.
 
+% Para testar o replica na figura é preciso aplicar replica p/ cada um dos IDs
 replica(Id, N, Dx, Dy) :-
-    between(1, N, T),
+    between(1, N, Index),
     (findall(V, (xy(Id, X, Y), append([Id], [X], L), append(L, [Y], V)), DeslocList),
      length(DeslocList, S),
      between(0, S, K),
-     nth0(K, DeslocList, M),
-     nth0(0, M, IdM),
-     nth0(1, M, XM),
-     nth0(2, M, YM),
-     atom_concat(IdM, '_', Temp),
-     atom_concat(Temp, T, NewId),
-     NewX is XM + (Dx*T),
-     NewY is YM + (Dy*T),
-     ((K =:= 0) -> new(NewId, NewX, NewY);
-     new(NewId, XM, YM))),
+     nth0(K, DeslocList, Elem),
+     nth0(0, Elem, CurrentId),
+     nth0(1, Elem, CurrentX),
+     nth0(2, Elem, CurrentY),
+     atom_concat(CurrentId, '_', Temp),
+     atom_concat(Temp, Index, AuxId),
+     AuxX is CurrentX + (Dx*Index),
+     AuxY is CurrentY + (Dy*Index),
+     ((K =:= 0) -> new(AuxId, AuxX, AuxY);
+     new(AuxId, CurrentX, CurrentY))),
      false.
 
 % desenha um circulo de acordo com o resultado: cada ponto p de um circulo é igual a (x,y) = (r * cos(i), r * cos(i))

@@ -156,7 +156,7 @@ triangulo(Id, X, Y, Base) :-
     new(Id, X, Y),
     new(Id, Base, 0),
     new(Id,NBaseDiv2, NBaseDiv2),
-    commit.
+    false.
 
 replica(Id, N, Dx, Dy) :-
     between(1, N, T),
@@ -193,6 +193,7 @@ circulo(Id, X, Y, R) :- elipse(Id, X, Y, R, 0).
 % Dois pontos de um circulo ou elipse tem uma distancia h, h é a hipotenusa de um triangulo retangulo formado por esses dois pontos
 % Toda vez que o cateto adjacente aumenta e o oposto dimunui, o circulo se deforma e vira, cada vez mais, uma elipse,
 % por isso há a multiplicação do componente X e a divisão do componente Y de cada ponto
+% Poderia dividir por E simplesmente, mas a excentricidade do circulo é 0, então E + 1, é necessaria
 elipse(Id, X, Y, R, E) :- 
             new(Id, X, Y),
             loop(Id, 0, R, E).
@@ -210,6 +211,9 @@ loop(Id,N, R, E) :-
 
 degToRad(Deg, Rad) :- X is Deg * 3.14159265, Rad is X / 180.0.
 
+% Desenha um rosto
+%
+
 figura(Id,X,Y) :- circulo(rosto, X, Y, 4).
 figura(Id,X,Y) :- X1 is X - 50,
                   Y1 is Y + 100,
@@ -217,4 +221,8 @@ figura(Id,X,Y) :- X1 is X - 50,
 figura(Id,X,Y) :- X2 is X + 100,
                   Y2 is Y + 100,
                   circulo(olhoEsquerdo,X2,Y2,0.5).
-figura(Id,X,Y) :- X2 is X 
+figura(Id,X,Y) :- Y3 is Y + 250,
+                  X3 is X,
+                  triangulo(nariz,X3,Y3,50).
+figura(Id,X,Y) :- Y4 is Y + 350,
+                  elipse(boca,X,Y4,1,1).

@@ -94,10 +94,8 @@ searchLast(Id, N) :-
     showRangeList(ListPoints,Init,Len),
     false.
 
-%%Escreve uma lista de deslocamentos no arquivos    
+%%Escreve uma lista de deslocamentos no arquivo, formato da lista: [[id1,X1,Y],[id2,X2,Y2],...]
 writeListInfile(List) :- 
-    removeAll,
-    retractall(list(_, _, _)),
     length(List,Size),
     between(0,Size,K),
     nth0(K, List, P),
@@ -105,6 +103,8 @@ writeListInfile(List) :-
     nth0(1, P, XP),
     nth0(2, P, YP),
     new(Id, XP, YP).
+
+
 % o change1 altera só a primeira ocorrencia do ponto, por exemplo, se no banco existe [[id1,10,10],[id1,10,10]],
 % o change1 só irá alterar a primeira ocorrencia, ficando o banco assim: [[id1,Ynew,Xnew],[id1,10,10]]
 % o change altera todas as ocorrencias
@@ -117,23 +117,15 @@ change1(Id, X,Y,Xnew, Ynew) :-
     nth0(1, P, XP),
     nth0(2, P, YP),
     IdP = Id, XP = X, YP = Y -> replace(All,K,Xnew,Ynew,List),
-    writeListInfile(List).
+    removeAll,
+    retractall(list(_, _, _)),
+    writeListInfile(List),
+    false.
 
-%muda as coordenadas do deslocamento, mas nao a posicao dele no arquivo
+%muda as coordenadas de um dado deslocamento
 change(Id, X, Y, Xnew, Ynew) :-
-    (findall(V, (xy(I, A, B), append([I], [A], L), append(L, [B], V)), All),
-     length(All, Size),
-     removeAll,
-     retractall(list(_, _, _)),
-     between(0, Size, K),
-     nth0(K, All, P),
-     nth0(0, P, IdP),
-     nth0(1, P, XP),
-     nth0(2, P, YP),
-     (IdP = Id, XP = X, YP = Y -> new(IdP, Xnew, Ynew),write(K);
-      new(IdP, XP, YP)),
-     false);
-    true.
+    retract(xy(Id,X,Y)), !,
+    assert(xy(Id,Xnew,Ynew)).
     
 changeFirst(Id, Xnew, Ynew) :-
     remove(Id, _, _),
@@ -141,14 +133,18 @@ changeFirst(Id, Xnew, Ynew) :-
     asserta(xy(Id, Xnew, Ynew)),
     assertz(list(Id, Xnew, Ynew)).
 
-replaceAux( L , X , Y , Z , R ) :-
-  append(RowPfx,[Row|RowSfx],L),     % decompose the list-of-lists into a prefix, a list and a suffix
-  length(RowPfx,X) ,                 % check the prefix length: do we have the desired list?
-  append(ColPfx,[_|ColSfx],Row) ,    % decompose that row into a prefix, a column and a suffix
-  length(ColPfx,Y) ,                 % check the prefix length: do we have the desired column?
-  append(ColPfx,[Z|ColSfx],RowNew) , % if so, replace the column with its new value
+% L é uma lista de listas, X é a linha e Y a coluna, Z é valor a ser alterado e
+% R é a lista alterada
+replaceAux(L,X,Y,Z,R) :-
+  append(RowPfx,[Row|RowSfx],L),
+  length(RowPfx,X),
+  append(ColPfx,[_|ColSfx],Row),
+  length(ColPfx,Y),
+  append(ColPfx,[Z|ColSfx],RowNew),
   append(RowPfx,[RowNew|RowSfx],R).
 
+% Usa replaceAux para listas do tipo [[id0,X0,Y0],[id1,X1,Y1],...]
+% Pos é o indice do deslocamento, Xnew e Ynew sao os valores a serem alterados, NewList é a lista alterada
 replace(List,Pos,Xnew,Ynew, NewList) :-
                 replaceAux(List,Pos,1,Xnew,Aux),
                 replaceAux(Aux,Pos,2,Ynew,NewList).
@@ -175,10 +171,15 @@ removeAll(Id) :-  retractall((xy(Id,_,_))).
 removeAll     :- retractall(xy(_,_,_)).
 
 undo :-
-    list(X, Y, Z),
-    retract(xy(X, Y, Z)),
-    !.
-
+    findall(V, (xy(Id, X, Y), append([Id], [X], L), append(L, [Y], V)), DeslocList),
+    length(DeslocList,Size),
+    nth1(Size,DeslocList,El),
+    nth0(0,El,Id),
+    nth0(1,El,X),
+    nth0(2,El,Y),
+    retract(xy(Id,X,Y)),
+    write(El).
+    
 retangulo(Id, X, Y, Lado1, Lado2) :-
     NegLado1 is (-1) * Lado1,
     new(Id,X,Y),
@@ -214,14 +215,6 @@ replica(Id, N, Dx, Dy) :-
      new(NewId, XM, YM))),
      false.
 
-%desenha uma casa%
-
-casa(Id, X, Y) :- atom_concat(Id, '_telhado', Id1Aux),
-                    atom_concat(Id, '_corpo', Id2Aux),
-                    atom_concat(Id, '_porta', Id3Aux),
-                    triangulo(Id1Aux, X, Y, 100),
-                    quadrado(Id2Aux, X, Y, 100).
-
 % desenha um circulo de acordo com o resultado: cada ponto p de um circulo é igual a (x,y) = (r * cos(i), r * cos(i))
 % i esta em graus e varia de 0 a 360. Usa a elipse como base com a excentricidade igual a 0
 %
@@ -237,6 +230,7 @@ elipse(Id, X, Y, R, E) :-
             new(Id, X, Y),
             loop(Id, 0, R, E).
 
+% Faz o loop e calcula os pontos do circulo ou elipse
 loop(Id,N, R, E) :-
   N < 360,
   N0 is N + 1,

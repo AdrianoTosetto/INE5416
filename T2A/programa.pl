@@ -206,7 +206,6 @@ loop(Id,N, R, E) :-
   X is (cos(Aux1) * R)*(E + 1),
   Y is (sin(Aux2) * R)/(E + 1),
   new(Id,X,Y),
-  write(X),write(' '),write(Y),nl,
   loop(Id,N0,R,E).
 
 degToRad(Deg, Rad) :- X is Deg * 3.14159265, Rad is X / 180.0.
@@ -214,15 +213,21 @@ degToRad(Deg, Rad) :- X is Deg * 3.14159265, Rad is X / 180.0.
 % Desenha um rosto
 %
 
-figura(Id,X,Y) :- circulo(rosto, X, Y, 4).
+teste(Id) :- atom_concat(Id, 'teste', NewId), print(NewId).
+
+figura(Id,X,Y) :- circulo(Id, X, Y, 4).
 figura(Id,X,Y) :- X1 is X - 50,
                   Y1 is Y + 100,
-                  circulo(olhoDireito,X1,Y1,0.5).
+                  atom_concat(Id, '_olhoEsquerdo', RealId),
+                  circulo(RealId,X1,Y1,0.5).
 figura(Id,X,Y) :- X2 is X + 100,
                   Y2 is Y + 100,
-                  circulo(olhoEsquerdo,X2,Y2,0.5).
+                  atom_concat(Id, '_olhoDireito', RealId),
+                  circulo(RealId,X2,Y2,0.5).
 figura(Id,X,Y) :- Y3 is Y + 250,
                   X3 is X,
-                  triangulo(nariz,X3,Y3,50).
+                  atom_concat(Id, '_nariz', RealId),
+                  triangulo(RealId,X3,Y3,50).
 figura(Id,X,Y) :- Y4 is Y + 350,
-                  elipse(boca,X,Y4,1,1).
+                  atom_concat(Id, '_boca', RealId),
+                  elipse(RealId,X,Y4,1,1).

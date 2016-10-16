@@ -94,15 +94,64 @@ searchLast(Id, N) :-
     showRangeList(ListPoints,Init,Len),
     false.
 
-change(Id, X, Y, Xnew, Ynew) :-
-    remove(Id,X,Y),
-    assertz(xy(Id,Xnew,Ynew)),!.
+%%Escreve uma lista de deslocamentos no arquivos    
+writeListInfile(List) :- 
+    removeAll,
+    retractall(list(_, _, _)),
+    length(List,Size),
+    between(0,Size,K),
+    nth0(K, List, P),
+    nth0(0, P, Id),
+    nth0(1, P, XP),
+    nth0(2, P, YP),
+    new(Id, XP, YP).
+% o change1 altera só a primeira ocorrencia do ponto, por exemplo, se no banco existe [[id1,10,10],[id1,10,10]],
+% o change1 só irá alterar a primeira ocorrencia, ficando o banco assim: [[id1,Ynew,Xnew],[id1,10,10]]
+% o change altera todas as ocorrencias
+change1(Id, X,Y,Xnew, Ynew) :- 
+    findall(V, (xy(I, A, B), append([I], [A], L), append(L, [B], V)), All),
+    length(All, Size),
+    between(0,Size,K),
+    nth0(K, All, P),
+    nth0(0, P, IdP),
+    nth0(1, P, XP),
+    nth0(2, P, YP),
+    IdP = Id, XP = X, YP = Y -> replace(All,K,Xnew,Ynew,List),
+    writeListInfile(List).
 
+%muda as coordenadas do deslocamento, mas nao a posicao dele no arquivo
+change(Id, X, Y, Xnew, Ynew) :-
+    (findall(V, (xy(I, A, B), append([I], [A], L), append(L, [B], V)), All),
+     length(All, Size),
+     removeAll,
+     retractall(list(_, _, _)),
+     between(0, Size, K),
+     nth0(K, All, P),
+     nth0(0, P, IdP),
+     nth0(1, P, XP),
+     nth0(2, P, YP),
+     (IdP = Id, XP = X, YP = Y -> new(IdP, Xnew, Ynew),write(K);
+      new(IdP, XP, YP)),
+     false);
+    true.
+    
 changeFirst(Id, Xnew, Ynew) :-
     remove(Id, _, _),
     !,
     asserta(xy(Id, Xnew, Ynew)),
     assertz(list(Id, Xnew, Ynew)).
+
+replaceAux( L , X , Y , Z , R ) :-
+  append(RowPfx,[Row|RowSfx],L),     % decompose the list-of-lists into a prefix, a list and a suffix
+  length(RowPfx,X) ,                 % check the prefix length: do we have the desired list?
+  append(ColPfx,[_|ColSfx],Row) ,    % decompose that row into a prefix, a column and a suffix
+  length(ColPfx,Y) ,                 % check the prefix length: do we have the desired column?
+  append(ColPfx,[Z|ColSfx],RowNew) , % if so, replace the column with its new value
+  append(RowPfx,[RowNew|RowSfx],R).
+
+replace(List,Pos,Xnew,Ynew, NewList) :-
+                replaceAux(List,Pos,1,Xnew,Aux),
+                replaceAux(Aux,Pos,2,Ynew,NewList).
 
 changeLast(Id, Xnew, Ynew) :-
     findall(V, (xy(Id, X, Y), append([Id], [X], L), append(L, [Y], V)), All),

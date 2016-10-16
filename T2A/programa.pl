@@ -78,8 +78,9 @@ remove :-
 searchFirst(Id, N) :-
     findall(V, (xy(Id, X, Y), append([Id], [X], L), append(L, [Y], V)), List),
     between(1, N, Mid),
-    nth1(Mid, List, Point),
-    write(Point),
+    nth1(Mid, List, Desloc),
+    write(Desloc),
+    nl,
     write(' '),
     false.
 % cria uma lista com todos os pontos de acordo com o id do ponto
@@ -89,25 +90,15 @@ searchLast(Id, N) :-
     length(ListPoints, Len),
     Init is Len - N,
     between(Init, Len, Mid),
-    nth0(Mid, ListPoints, Vertex),
-    write(Vertex),
+    nth0(Mid, ListPoints, Desloc),
+    write(Desloc),
+    nl,
     write(' '),
     false.
 
 change(Id, X, Y, Xnew, Ynew) :-
-    (findall(V, (xy(I, A, B), append([I], [A], L), append(L, [B], V)), All),
-     length(All, T),
-     retractall(xy(_, _, _)),
-     retractall(list(_, _, _)),
-     between(0, T, K),
-     nth0(K, All, P),
-     nth0(0, P, IdP),
-     nth0(1, P, XP),
-     nth0(2, P, YP),
-     (IdP = Id, XP = X, YP = Y -> new(IdP, Xnew, Ynew);
-      new(IdP, XP, YP)),
-     false);
-    true.
+    remove(Id,X,Y),
+    assertz(xy(Id,Xnew,Ynew)),!.
 
 changeFirst(Id, Xnew, Ynew) :-
     remove(Id, _, _),
@@ -211,9 +202,6 @@ loop(Id,N, R, E) :-
 degToRad(Deg, Rad) :- X is Deg * 3.14159265, Rad is X / 180.0.
 
 % Desenha um rosto
-%
-
-teste(Id) :- atom_concat(Id, 'teste', NewId), print(NewId).
 
 figura(Id,X,Y) :- circulo(Id, X, Y, 4).
 figura(Id,X,Y) :- X1 is X - 50,

@@ -73,27 +73,25 @@ remove :-
     write('removeAll(Id)   -> remove todos os deslocamentos com o id Id'),nl,
     write('removeAll       -> remove TODOS os deslocamentos'), nl.
 
-% cria uma lista com todos os pontos de acordo com o id do ponto
-% seleciona e escreve (através do between) os pontos entre 1 e N
+
+%Mostra elementos da lista dado um range
+showRangeList(List, Begin, End) :-
+                                    between(Begin,End,Index),
+                                    nth1(Index,List,Elem),
+                                    write(Elem),nl.
+
 searchFirst(Id, N) :-
     findall(V, (xy(Id, X, Y), append([Id], [X], L), append(L, [Y], V)), List),
-    between(1, N, Mid),
-    nth1(Mid, List, Desloc),
-    write(Desloc),
-    nl,
-    write(' '),
+    showRangeList(List, 1, N),
     false.
-% cria uma lista com todos os pontos de acordo com o id do ponto
-% seleciona e escreve (através do between) os pontos entre tamanhoDaLista - N e N
+
+
+%calcula o range a ser mostrado sabendo que o primeiro elemento precisa ser TamanhoList - N
 searchLast(Id, N) :-
     findall(V, (xy(Id, X, Y), append([Id], [X], L), append(L, [Y], V)), ListPoints),
     length(ListPoints, Len),
-    Init is Len - N,
-    between(Init, Len, Mid),
-    nth0(Mid, ListPoints, Desloc),
-    write(Desloc),
-    nl,
-    write(' '),
+    Init is Len - N + 1,
+    showRangeList(ListPoints,Init,Len),
     false.
 
 change(Id, X, Y, Xnew, Ynew) :-
@@ -109,16 +107,17 @@ changeFirst(Id, Xnew, Ynew) :-
 changeLast(Id, Xnew, Ynew) :-
     findall(V, (xy(Id, X, Y), append([Id], [X], L), append(L, [Y], V)), All),
     last(All, Last),
-    nth0(0, Last, IdL),
-    nth0(1, Last, XL),
-    nth0(2, Last, YL),
-    remove(IdL, XL, YL),
+    nth0(0, Last, IdLast),
+    nth0(1, Last, XLast),
+    nth0(2, Last, YLast),
+    remove(IdLast, XLast, YLast),
     assertz(xy(Id, Xnew, Ynew)),
     asserta(list(Id, Xnew, Ynew)),
     !.
 
 remove(Id, X, Y) :-
-    retract(xy(Id, X, Y)).
+    retract(xy(Id, X, Y)),
+    !.
 
 removeFirst(Id) :- xy(Id, A, B), retract(xy(Id,A,B)), !.
 
@@ -151,10 +150,10 @@ triangulo(Id, X, Y, Base) :-
 
 replica(Id, N, Dx, Dy) :-
     between(1, N, T),
-    (findall(V, (xy(Id, X, Y), append([Id], [X], L), append(L, [Y], V)), All),
-     length(All, S),
+    (findall(V, (xy(Id, X, Y), append([Id], [X], L), append(L, [Y], V)), DeslocList),
+     length(DeslocList, S),
      between(0, S, K),
-     nth0(K, All, M),
+     nth0(K, DeslocList, M),
      nth0(0, M, IdM),
      nth0(1, M, XM),
      nth0(2, M, YM),
